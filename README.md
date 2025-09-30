@@ -8,9 +8,11 @@ cs699_project/
 │   ├── index.html
 │   ├── styles.css
 │   └── images/
+│       └── mgnrega.png
 ├── backend/
 │   ├── web_scraping/
 │   │   └── webscraping.ipynb
 │   └── database/
-└── project_structure.md
+│       └── db.py
+└── README.md
 ```
