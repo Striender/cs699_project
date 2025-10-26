@@ -28,3 +28,4 @@ cs699_project/
 2. Activate the virtual environment using: `source venv/bin/activate`
 3. Install the requirements using: `pip install -r requirements.txt`
 4. Run the python script `python src/backend/web_scraping/automate.py`
+5. Create a .env file for supabase db, refer the `.env.example`

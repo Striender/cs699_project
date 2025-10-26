@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import scrape
-import db_dump
+import backend.database.db_dump as db_dump
 
 # URL to scrape
 URL = "https://nreganarep.nic.in/netnrega/dynamic_work_details.aspx?lflag=eng&fin_year=2025-2026&source=national&labels=labels&Digest=0a5fZ+hdCIswROP5LqpxKg"
