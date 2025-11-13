@@ -26,7 +26,7 @@ def scrapeFunc(html: str):
 
     # Process first header row (handle colspan)
     for th in header_rows[0].find_all(["th", "td"]):
-        colspan = int(th.get("colspan", 1))
+        colspan = int(th.get("colspan",  1))
         text = th.get_text(strip=True)
         headers.extend([text] * colspan)
 
