@@ -134,6 +134,38 @@ def show_report():
         total_pages=total_pages
     )
 
+@app.route("/get_panchayats")
+def get_panchayats():
+    year = request.args.get("financial_year")
+    state = request.args.get("state_name")
+    block = request.args.get("block_name")
+    panchayats_set = set()
+
+    if not (year and state and block):
+        return jsonify([])
+
+    for table in DISTRICT_TABLES:
+        try:
+            resp = (
+                supabase.table(table)
+                .select('"Panchayat Name"')
+                .eq('"Work Start Fin Year"', year)
+                .eq('"District Name"', state)
+                .eq('"Block Name"', block)
+                .range(0, 10000)
+                .execute()
+            )
+            if resp.data:
+                for row in resp.data:
+                    p_name = row.get("Panchayat Name")
+                    if p_name:  # only non-empty panchayats
+                        panchayats_set.add(p_name)
+        except Exception as e:
+            print(f"Error fetching panchayats from {table}: {e}")
+            continue
+
+    return jsonify(sorted(panchayats_set))
+
 
 
 if __name__ == "__main__":
