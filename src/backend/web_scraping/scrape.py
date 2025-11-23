@@ -53,4 +53,4 @@ def scrapeFunc(html: str):
     print("Scraping completed. Sample data:")
     print(df.head())
 
-    # return df
+    return df
