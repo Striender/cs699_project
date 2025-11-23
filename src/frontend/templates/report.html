@@ -136,7 +136,29 @@
                 <button type="submit" class="search_button">Filter</button>
                 <button type="button" id="downloadCsvBtn" class="search_button" onclick="downloadCsv()"
                     title="Download visible report as CSV">Download CSV</button>
+                <button type="button" id="getPlotsBtn" class="search_button" onclick="goToPlots()"
+                    title="Show plots for current results">Get Plots</button>
             </div>
+            <script>
+                function goToPlots() {
+                    const year = "{{ year }}";
+                    const state = "{{ state }}";
+                    const block = document.getElementById("block_name").value;
+                    const panchayatSelect = document.getElementById("panchayat_name");
+                    const panchayat = panchayatSelect ? panchayatSelect.value : "";
+
+                    // Construct query params with current filters
+                    const params = new URLSearchParams({
+                        financial_year: year,
+                        state_name: state,
+                        block_name: block,
+                        panchayat_name: panchayat
+                    });
+
+                    // Redirect to /get_plots with current filter params
+                    window.location.href = `/get_plots?${params.toString()}`;
+                }
+            </script>
         </form>
 
         {% if block_name %}

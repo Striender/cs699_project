@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plots for {{ state }} ({{ year }})</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 95%;
+      max-width: 1100px;
+      margin: 20px auto;
+    }
+
+    h1,
+    h2 {
+      text-align: center;
+    }
+
+    .chart-wrap {
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      margin: 20px 0;
+      border: 2px solid #ccc;
+      /* Border for each chart container */
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 400px !important;
+    }
+
+    .download-btn {
+      margin-top: 10px;
+      padding: 8px 15px;
+      border-radius: 5px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .download-btn:hover {
+      background-color: #45a049;
+    }
+
+    a.back-link {
+      display: block;
+      text-align: center;
+      margin: 30px 0;
+      font-size: 1.1rem;
+      text-decoration: none;
+      color: #2c7be5;
+    }
+
+    a.back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Plots for {{ state }} (Financial Year: {{ year }})</h1>
+  <h2>Block: {{ block or 'All' }} </h2>
+
+  <div class="chart-wrap">
+    <canvas id="sanctionedAmountChart"></canvas>
+    <button class="download-btn" onclick="downloadChartImage('sanctionedAmountChart')">Download Image</button>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="expenditureChart"></canvas>
+    <button class="download-btn" onclick="downloadChartImage('expenditureChart')">Download Image</button>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="personDaysChart"></canvas>
+    <button class="download-btn" onclick="downloadChartImage('personDaysChart')">Download Image</button>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="unitsAssignedChart"></canvas>
+    <button class="download-btn" onclick="downloadChartImage('unitsAssignedChart')">Download Image</button>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="sanctionVsExpenditureChart"></canvas>
+    <button class="download-btn" onclick="downloadChartImage('sanctionVsExpenditureChart')">Download Image</button>
+  </div>
+
+
+  <a href="{{ url_for('show_report', financial_year=year, state_name=state, block_name=block, panchayat_name=panchayat) }}"
+    class="back-link">← Back to Report</a>
+
+  <script>
+    // incoming results from server
+    const results = {{ results | tojson }};
+
+    // robust number parser: remove commas and non numeric chars
+    function parseNumber(v) {
+      if (v === null || v === undefined || v === '') return 0;
+      const s = String(v).replace(/,/g, '').replace(/[^\d\.\-]/g, '');
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+
+
+    const groupKey = "Panchayat Name";
+    // aggregate values by chosen group key
+    const grouped = results.reduce((acc, row) => {
+      const keyRaw = row[groupKey] || "Unknown";
+      const key = String(keyRaw).trim() || "Unknown";
+      if (!acc[key]) {
+        acc[key] = { sanctioned: 0, expenditure: 0, mandays: 0, units: 0 };
+      }
+      // sanction may be split across columns
+      const sanctionW = parseNumber(row["Sanction Amount(in Rs)_Wages"]);
+      const sanctionM = parseNumber(row["Sanction Amount(in Rs)_Material"]);
+      const sanctionedTotal = sanctionW + sanctionM;
+      const expendW = parseNumber(row["Amount paid since inception (in Rs)_Wages"]);
+      const expendM = parseNumber(row["Amount booked since inception (in Rs)_Material"]);
+      const expenditureTotal = expendW + expendM;
+      const mandays = parseNumber(row["Total Mandays"]);
+      const units = parseNumber(row["No. Of Units"]);
+
+      acc[key].sanctioned += sanctionedTotal;
+      acc[key].expenditure += expenditureTotal;
+      acc[key].mandays += mandays;
+      acc[key].units += units; // properly accumulate units data
+      return acc;
+    }, {});
+
+    // prepare arrays for charts: keep deterministic order (alphabetical) or by value if needed
+    const labels = Object.keys(grouped).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const sanctionedData = labels.map(l => grouped[l].sanctioned);
+    const expenditureData = labels.map(l => grouped[l].expenditure);
+    const personDaysData = labels.map(l => grouped[l].mandays);
+    const unitsData = labels.map(l => grouped[l].units); // properly calculate units data
+
+    // helper to shorten x labels for display
+    const displayLabels = labels.map(l => (l.length > 30 ? l.slice(0, 27) + '...' : l));
+
+    // common chart options to show many labels
+    const commonOptions = {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: {
+          ticks: {
+            autoSkip: false,
+            maxRotation: 45,
+            minRotation: 45
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function (value) {
+              return value >= 1000 ? value.toLocaleString() : value;
+            }
+          }
+        }
+      },
+      maintainAspectRatio: false
+    };
+
+    const ctxUnits = document.getElementById('unitsAssignedChart').getContext('2d');
+    new Chart(ctxUnits, {
+      type: 'bar',
+      data: {
+        labels: displayLabels,
+        datasets: [{
+          label: 'Total Work Units Assigned',
+          data: unitsData,
+          backgroundColor: 'rgba(153, 102, 255, 0.8)' // Purple color
+        }]
+      },
+      options: Object.assign({}, commonOptions, {
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: `Total Work Units Assigned by ${groupKey}` }
+        }
+      })
+    });
+
+
+    // Sanctioned Amount Chart
+    const ctxSanctioned = document.getElementById('sanctionedAmountChart').getContext('2d');
+    new Chart(ctxSanctioned, {
+      type: 'bar',
+      data: {
+        labels: displayLabels,
+        datasets: [{
+          label: 'Sanctioned Amount (Rs)',
+          data: sanctionedData,
+          backgroundColor: 'rgba(54, 162, 235, 0.8)'
+        }]
+      },
+      options: Object.assign({}, commonOptions, {
+        plugins: { legend: { display: false }, title: { display: true, text: `Sanctioned Amount by ${groupKey}` } }
+      })
+    });
+
+    // Expenditure Chart
+    const ctxExpenditure = document.getElementById('expenditureChart').getContext('2d');
+    new Chart(ctxExpenditure, {
+      type: 'bar',
+      data: {
+        labels: displayLabels,
+        datasets: [{
+          label: 'Total Expenditure (Rs)',
+          data: expenditureData,
+          backgroundColor: 'rgba(75, 192, 192, 0.8)'
+        }]
+      },
+      options: Object.assign({}, commonOptions, {
+        plugins: { legend: { display: false }, title: { display: true, text: `Expenditure by ${groupKey}` } }
+      })
+    });
+
+
+
+    // Person-Days Chart
+    const ctxPersonDays = document.getElementById('personDaysChart').getContext('2d');
+    new Chart(ctxPersonDays, {
+      type: 'bar',
+      data: {
+        labels: displayLabels,
+        datasets: [{
+          label: 'Total Person-Days',
+          data: personDaysData,
+          backgroundColor: 'rgba(255, 159, 64, 0.8)'
+        }]
+      },
+      options: Object.assign({}, commonOptions, {
+        plugins: { legend: { display: false }, title: { display: true, text: `Person-Days by ${groupKey}` } }
+      })
+    });
+
+    // Compute ratio: Expenditure / Sanctioned Amount
+    const ratioData = labels.map((l, i) => {
+      const sanctioned = sanctionedData[i];
+      const expenditure = expenditureData[i];
+      return sanctioned ? (expenditure / sanctioned) : 0;  // avoid divide by zero
+    });
+
+    new Chart(document.getElementById('sanctionVsExpenditureChart'), {
+      type: 'bar',
+      data: {
+        labels: displayLabels,
+        datasets: [{
+          label: 'Expenditure / Sanctioned Amount Ratio',
+          data: ratioData,
+          backgroundColor: 'rgba(75,192,192,0.8)'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Expenditure / Sanctioned Amount Ratio by Panchayat' },
+          legend: { display: false }
+        },
+        scales: {
+          x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 } },
+          y: { beginAtZero: true, max: 1, ticks: { callback: value => (value * 100).toFixed(0) + '%' } } // show as percentage
+        }
+      }
+    });
+
+
+    function downloadChartImage(chartId) {
+      const chart = Chart.getChart(chartId);
+      if (!chart) return;
+
+      // Use an offscreen canvas so we don't modify the visible chart
+      const srcCanvas = chart.canvas;
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = srcCanvas.width;
+      tmpCanvas.height = srcCanvas.height;
+      const tctx = tmpCanvas.getContext('2d');
+
+      // Fill white background then draw the chart canvas on top
+      tctx.fillStyle = '#ffffff';
+      tctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+      tctx.drawImage(srcCanvas, 0, 0);
+
+      // Export PNG from the offscreen canvas
+      const url = tmpCanvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = chartId + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+
+</html>

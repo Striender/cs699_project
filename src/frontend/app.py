@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import os
+import json
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from flask import jsonify, request
@@ -167,6 +168,34 @@ def get_panchayats():
     return jsonify(sorted(panchayats_set))
 
 
+
+@app.route("/get_plots")
+def get_plots():
+    year = request.args.get("financial_year")
+    state = request.args.get("state_name")
+    block = request.args.get("block_name", "")
+    panchayat = None
+
+    results = []
+    if year and state:
+        for table in DISTRICT_TABLES:
+            try:
+                query = supabase.table(table).select("*")
+                query = query.eq('"Work Start Fin Year"', year)
+                query = query.eq('"District Name"', state)
+                if block:
+                    query = query.eq('"Block Name"', block)
+                if panchayat:
+                    query = query.eq('"Panchayat Name"', panchayat)
+
+                resp = query.range(0, 20000).execute()
+                if resp.data:
+                    results.extend(resp.data)
+            except Exception:
+                continue
+
+    # Pass results to plots.html for plotting
+    return render_template("plots.html", results=results, year=year, state=state, block=block, panchayat=panchayat)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
