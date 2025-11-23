@@ -81,11 +81,10 @@
     <main>
         <h1>MGNREGA Data</h1>
         <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
-            <h2 style="margin:0; line-height:1; display:flex; align-items:center;">
-                Report for {{ state }} (Financial Year: {{ year }})
-            </h2>
-        </div>
+            <h2 style="margin:0;">Report for {{ state }} (Financial Year: {{ year }})</h2>
 
+
+        </div>
         <form method="get" action="{{ url_for('show_report') }}" style="margin-bottom:20px;">
             <input type="hidden" name="financial_year" value="{{ year }}">
             <input type="hidden" name="state_name" value="{{ state }}">
@@ -104,8 +103,36 @@
             </select>
             {% endif %}
 
+            <script>
+                document.getElementById("block_name").addEventListener("change", async function () {
+                    const block = this.value;
+                    const year = "{{ year }}";
+                    const state = "{{ state }}";
 
-            <div style="display: flex; gap: 12px; justify-content: left; align-items: left; margin-top: 10px;">
+                    const panchayatSelect = document.getElementById("panchayat_name");
+
+                    // Clear the dropdown and reset the value immediately
+                    panchayatSelect.innerHTML = '<option value="">All</option>';
+                    panchayatSelect.value = "";  // ensures form submits empty panchayat
+
+                    if (!block) return;
+
+                    try {
+                        const resp = await fetch(`/get_panchayats?financial_year=${year}&state_name=${state}&block_name=${block}`);
+                        const data = await resp.json();
+                        data.forEach(p => {
+                            const opt = document.createElement("option");
+                            opt.value = p;
+                            opt.textContent = p;
+                            panchayatSelect.appendChild(opt);
+                        });
+                    } catch (err) {
+                        console.error("Error fetching panchayats:", err);
+                    }
+                });
+            </script>
+
+            <div style="display: flex; gap: 12px; justify-content: left; align-items: center; margin-top: 10px;">
                 <button type="submit" class="search_button">Filter</button>
                 <button type="button" id="downloadCsvBtn" class="search_button" onclick="downloadCsv()"
                     title="Download visible report as CSV">Download CSV</button>
@@ -188,32 +215,6 @@
 
 
     </main>
-    {% if total_pages > 1 %}
-    <div style="text-align:center; margin-top:20px;">
-
-        {% if page > 1 %}
-        <a
-            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ page-1 }}">⬅
-            Previous</a>
-        {% endif %}
-
-        {% for p in range(1, total_pages+1) %}
-        {% if p == page %}
-        <strong>[{{ p }}]</strong>
-        {% else %}
-        <a
-            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ p }}">{{
-            p }}</a>
-        {% endif %}
-        {% endfor %}
-
-        {% if page < total_pages %} <a
-            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ page+1 }}">
-            Next ➡</a>
-            {% endif %}
-
-    </div>
-    {% endif %}
     <script>
         // Download the visible table as CSV (only the currently rendered/paginated rows)
         function downloadCsv() {
@@ -256,6 +257,33 @@
             URL.revokeObjectURL(url);
         }
     </script>
+    {% if total_pages > 1 %}
+    <div style="text-align:center; margin-top:20px;">
+
+        {% if page > 1 %}
+        <a
+            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ page-1 }}">⬅
+            Previous</a>
+        {% endif %}
+
+        {% for p in range(1, total_pages+1) %}
+        {% if p == page %}
+        <strong>[{{ p }}]</strong>
+        {% else %}
+        <a
+            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ p }}">{{
+            p }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %} <a
+            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ page+1 }}">
+            Next ➡</a>
+            {% endif %}
+
+    </div>
+    {% endif %}
+
 </body>
 
 </html>
