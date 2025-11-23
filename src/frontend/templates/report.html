@@ -80,7 +80,12 @@
 
     <main>
         <h1>MGNREGA Data</h1>
-        <h2>Report for {{ state }} (Financial Year: {{ year }})</h2>
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
+            <h2 style="margin:0; line-height:1; display:flex; align-items:center;">
+                Report for {{ state }} (Financial Year: {{ year }})
+            </h2>
+        </div>
+
         <form method="get" action="{{ url_for('show_report') }}" style="margin-bottom:20px;">
             <input type="hidden" name="financial_year" value="{{ year }}">
             <input type="hidden" name="state_name" value="{{ state }}">
@@ -100,7 +105,11 @@
             {% endif %}
 
 
-            <button type="submit" class="search_button">Filter</button>
+            <div style="display: flex; gap: 12px; justify-content: left; align-items: left; margin-top: 10px;">
+                <button type="submit" class="search_button">Filter</button>
+                <button type="button" id="downloadCsvBtn" class="search_button" onclick="downloadCsv()"
+                    title="Download visible report as CSV">Download CSV</button>
+            </div>
         </form>
 
         {% if block_name %}
@@ -114,7 +123,7 @@
                 panchayatSelect.innerHTML = '<option value="">All</option>'; // reset
 
                 panchayatSelect.value = "";
-                
+
                 if (!block) return;
 
                 try {
@@ -205,7 +214,48 @@
 
     </div>
     {% endif %}
+    <script>
+        // Download the visible table as CSV (only the currently rendered/paginated rows)
+        function downloadCsv() {
+            const table = document.querySelector('.report-table');
+            if (!table) {
+                alert('No data visible to download.');
+                return;
+            }
 
+            const rows = [];
+            // headers
+            const ths = Array.from(table.querySelectorAll('thead th'));
+            const headers = ths.map(h => h.innerText.trim());
+            rows.push(headers);
+
+            // body rows
+            const trs = Array.from(table.querySelectorAll('tbody tr'));
+            trs.forEach(tr => {
+                const cells = Array.from(tr.querySelectorAll('td')).map(td => {
+                    let txt = td.innerText.replace(/\r?\n|\r/g, ' ').trim();
+                    // escape quotes
+                    if (txt.includes('"') || txt.includes(',') || txt.includes('\n')) {
+                        txt = '"' + txt.replace(/"/g, '""') + '"';
+                    }
+                    return txt;
+                });
+                rows.push(cells);
+            });
+
+            const csvContent = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const filename = `report_${(state || '').replace(/\s+/g, '_')}_${(year || '').replace(/\s+/g, '_')}.csv`;
+            a.href = url;
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
 </body>
 
 </html>
