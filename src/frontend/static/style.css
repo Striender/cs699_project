@@ -1,0 +1,151 @@
+/* Basic reset and page styling */
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    /* Light grey background */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styling */
+header {
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 25px;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    height: 50px;
+    /* Adjust as needed */
+    margin-right: 15px;
+}
+
+.header-text {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.header-text div {
+    line-height: 1.4;
+}
+
+/* Main Content Styling */
+main {
+    flex-grow: 1;
+    /* This makes the main area fill the space */
+    position: relative;
+    padding: 20px;
+}
+
+/*.home-icon {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-size: 2rem;
+    color: #333;
+    text-decoration: none;
+}*/
+
+.home-icon:hover {
+    color: #000;
+}
+
+/* Form Styling */
+.report-form {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 10%;
+    /* Pushes the form down from the top */
+}
+
+.search_button{
+    height: 30px;
+    
+    margin-top: 32px;
+    background-color: #fff;
+}
+
+.search_button:hover{
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #444;
+}
+
+.form-group select {
+    width: 250px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #fff;
+}
+
+/* Footer Styling */
+.footer-content {
+    background-color: #ffffff;
+    display: flex;
+    /*justify-content: space-between;*/
+    gap : 25%;
+    align-items: center;
+    padding: 10px 25px;
+    border-top: 1px solid #ddd;
+    font-size: 0.8rem;
+    color: #555;
+    /* position: fixed; */
+    /* Uncomment this if you want it stuck to the bottom */
+    /* bottom: 0; */
+    /* width: 100%; */
+}
+
+.footer-content span {
+    color : black;
+    font-weight: bold;
+}
+.logo-nic {
+    margin-left: 50%;
+    margin-bottom: 10px;
+    height: 30px;
+    /* Adjust as needed */
+}
+
+.lang-button {
+    background-color: #004a99;
+    /* Blue color */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.lang-button .fa-caret-down {
+    margin-left: 5px;
+}

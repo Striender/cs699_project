@@ -26,7 +26,7 @@ def scrapeFunc(html: str):
 
     # Process first header row (handle colspan)
     for th in header_rows[0].find_all(["th", "td"]):
-        colspan = int(th.get("colspan",  1))
+        colspan = int(th.get("colspan", 1))
         text = th.get_text(strip=True)
         headers.extend([text] * colspan)
 
@@ -49,8 +49,8 @@ def scrapeFunc(html: str):
     df = pd.DataFrame(rows, columns=headers)
 
     # Save to CSV
-    # df.to_csv("output.csv", index=False)
+    df.to_csv("output.csv", index=False)
     print("Scraping completed. Sample data:")
     print(df.head())
 
-    return df
+    # return df

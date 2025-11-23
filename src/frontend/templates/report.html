@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report for {{ state }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Styles for our data table */
+        main {
+            width: 80%;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .report-table th,
+        .report-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .report-table th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        .report-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .no-results {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            font-size: 1rem;
+        }
+        .search_button {
+            display:  flex;
+            padding: 5px 10px;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-top: 20px;
+            box-shadow: none;
+        }
+        .search_button:hover {
+            cursor: pointer;
+            background-color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main>
+        <h1>MGNREGA Data</h1>
+        <h2>Report for {{ state }} (Financial Year: {{ year }})</h2>
+
+        {% if results %}
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>District</th>
+                    <th>Financial_year</th>
+                    </th>
+                    <th>Total Allocation</th>
+                    <th>Total Expenditure</th>
+                    <th>Total Person-Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in results %}
+                <tr>
+                    <td>{{ item.district }}</td>
+                    <td>{{ item.financial_year }}</td>
+                    <td>{{ item.total_allocation }}</td>
+                    <td>{{ item.total_expenditure }}</td>
+                    <td>{{ item.total_person_days }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-results">No data found for this selection.</p>
+        {% endif %}
+        <div class="search_button">
+            <button class="search_button" onclick="window.history.back();">Back</button>
+        </div>
+        
+        
+    </main>
+
+</body>
+
+</html>
