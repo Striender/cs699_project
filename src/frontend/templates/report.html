@@ -58,8 +58,9 @@
             margin-top: 30px;
             font-size: 1rem;
         }
+
         .search_button {
-            display:  flex;
+            display: flex;
             padding: 5px 10px;
             justify-content: center;
             border-radius: 4px;
@@ -67,6 +68,7 @@
             margin-top: 20px;
             box-shadow: none;
         }
+
         .search_button:hover {
             cursor: pointer;
             background-color: white;
@@ -79,27 +81,91 @@
     <main>
         <h1>MGNREGA Data</h1>
         <h2>Report for {{ state }} (Financial Year: {{ year }})</h2>
+        <form method="get" action="{{ url_for('show_report') }}" style="margin-bottom:20px;">
+            <input type="hidden" name="financial_year" value="{{ year }}">
+            <input type="hidden" name="state_name" value="{{ state }}">
+
+            <label for="block_name">Block:</label>
+            <select name="block_name" id="block_name">
+                <option value="">All</option>
+                {% for block in all_blocks %}
+                <option value="{{ block }}" {% if block==block_name %}selected{% endif %}>{{ block }}</option>
+                {% endfor %}
+            </select>
+            {% if block_name %}
+            <label for="panchayat_name">Panchayat:</label>
+            <select name="panchayat_name" id="panchayat_name">
+                <option value="">All</option>
+            </select>
+            {% endif %}
+
+
+            <button type="submit" class="search_button">Filter</button>
+        </form>
+
+        {% if block_name %}
+        <script>
+            const year = "{{ year }}";
+            const state = "{{ state }}";
+            const selectedPanchayat = "{{ panchayat_name or '' }}";
+
+            async function loadPanchayats(block) {
+                const panchayatSelect = document.getElementById("panchayat_name");
+                panchayatSelect.innerHTML = '<option value="">All</option>'; // reset
+
+                panchayatSelect.value = "";
+                
+                if (!block) return;
+
+                try {
+                    const resp = await fetch(`/get_panchayats?financial_year=${year}&state_name=${state}&block_name=${block}`);
+                    const data = await resp.json();
+                    data.forEach(p => {
+                        const opt = document.createElement("option");
+                        opt.value = p;
+                        opt.textContent = p;
+                        if (selectedPanchayat === p) opt.selected = true;
+                        panchayatSelect.appendChild(opt);
+                    });
+                } catch (err) {
+                    console.error("Error fetching panchayats:", err);
+                }
+            }
+
+            loadPanchayats("{{ block_name }}");
+        </script>
+        {% endif %}
+
 
         {% if results %}
         <table class="report-table">
             <thead>
                 <tr>
-                    <th>District</th>
-                    <th>Financial_year</th>
-                    </th>
-                    <th>Total Allocation</th>
-                    <th>Total Expenditure</th>
+                    <th>Block Name</th>
+                    <th>Panchayat Name</th>
+                    <th>Work type</th>
+                    <th>Work Status</th>
+                    <th>Sanctioned Amount(in Rs)</th>
+                    <th>Total Expenditure (Wages + Material) </th>
                     <th>Total Person-Days</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in results %}
                 <tr>
-                    <td>{{ item.district }}</td>
-                    <td>{{ item.financial_year }}</td>
-                    <td>{{ item.total_allocation }}</td>
-                    <td>{{ item.total_expenditure }}</td>
-                    <td>{{ item.total_person_days }}</td>
+                    <td>{{ item["Block Name"] }}</td>
+                    <td>{{ item["Panchayat Name"] }}</td>
+                    <td>{{ item["Work Type"] }}</td>
+                    <td>{{ item["Work Status"] }}</td>
+                    <td>
+                        {{ (item["Sanction Amount(in Rs)_Wages"] | int)
+                        + (item["Sanction Amount(in Rs)_Material"] | int) }}
+                    </td>
+                    <td>
+                        {{ (item["Amount paid since inception (in Rs)_Wages"] | int)
+                        + (item["Amount booked since inception (in Rs)_Material"] | int) }}
+                    </td>
+                    <td>{{ item["Total Mandays"] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -107,12 +173,38 @@
         {% else %}
         <p class="no-results">No data found for this selection.</p>
         {% endif %}
-        <div class="search_button">
+        <!-- <div class="search_button">
             <button class="search_button" onclick="window.history.back();">Back</button>
-        </div>
-        
-        
+        </div> -->
+
+
     </main>
+    {% if total_pages > 1 %}
+    <div style="text-align:center; margin-top:20px;">
+
+        {% if page > 1 %}
+        <a
+            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ page-1 }}">⬅
+            Previous</a>
+        {% endif %}
+
+        {% for p in range(1, total_pages+1) %}
+        {% if p == page %}
+        <strong>[{{ p }}]</strong>
+        {% else %}
+        <a
+            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ p }}">{{
+            p }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %} <a
+            href="?financial_year={{ year }}&state_name={{ state }}&block_name={{ block_name }}&panchayat_name={{ panchayat_name }}&page={{ page+1 }}">
+            Next ➡</a>
+            {% endif %}
+
+    </div>
+    {% endif %}
 
 </body>
 
