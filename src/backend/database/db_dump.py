@@ -10,11 +10,11 @@ def upload_to_supabase(df:pd.DataFrame, table_name: str="output"):
     load_dotenv()
 
     # Fetch database credentials
-    USER = os.getenv("user")
-    PASSWORD = os.getenv("password")
-    HOST = os.getenv("host")
-    PORT = os.getenv("port")
-    DBNAME = os.getenv("dbname")
+    USER = os.getenv("PGUSER")
+    PASSWORD = os.getenv("PGPASSWORD")
+    HOST = os.getenv("PGHOST")
+    PORT = os.getenv("PGPORT")
+    DBNAME = os.getenv("PGDATABASE")
 
     # Establish connection
     try:

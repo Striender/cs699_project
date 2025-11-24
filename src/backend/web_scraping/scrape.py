@@ -49,7 +49,7 @@ def scrapeFunc(html: str):
     df = pd.DataFrame(rows, columns=headers)
 
     # Save to CSV
-    df.to_csv("output.csv", index=False)
+    # df.to_csv("output.csv", index=False)
     print("Scraping completed. Sample data:")
     print(df.head())
 
