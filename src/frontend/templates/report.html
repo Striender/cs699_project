@@ -73,6 +73,75 @@
             cursor: pointer;
             background-color: white;
         }
+
+        .form-container {
+            text-align: center;
+            /* Center the elements */
+            margin-top: 20px;
+        }
+
+        .form-container label {
+            font-size: 1rem;
+            /* Slightly larger labels */
+            margin-right: 5px;
+        }
+
+        .form-container select {
+            font-size: 1rem;
+            /* Slightly larger dropdown text */
+            padding: 6px 10px;
+            /* Larger click area */
+            margin: 8px;
+            /* Space between elements */
+        }
+
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: left;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .search_button {
+            padding: 8px 16px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.25s ease;
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn-filter {
+            background-color: #007bff;
+        }
+
+        .btn-filter:hover {
+            background-color: #005ec4;
+        }
+
+        /* Download CSV – light green */
+        .btn-csv {
+            background-color: #4CAF50;
+            /* Light green */
+
+        }
+
+        .btn-csv:hover {
+            background-color: #3a9c40;
+        }
+
+        /* Get Plots – orange */
+        .btn-plots {
+            background-color: #000000;
+        }
+
+        .btn-plots:hover {
+            background-color: #000000;
+        }
     </style>
 </head>
 
@@ -85,23 +154,28 @@
 
 
         </div>
+        <br>
         <form method="get" action="{{ url_for('show_report') }}" style="margin-bottom:20px;">
             <input type="hidden" name="financial_year" value="{{ year }}">
             <input type="hidden" name="state_name" value="{{ state }}">
 
-            <label for="block_name">Block:</label>
-            <select name="block_name" id="block_name">
-                <option value="">All</option>
-                {% for block in all_blocks %}
-                <option value="{{ block }}" {% if block==block_name %}selected{% endif %}>{{ block }}</option>
-                {% endfor %}
-            </select>
-            {% if block_name %}
-            <label for="panchayat_name">Panchayat:</label>
-            <select name="panchayat_name" id="panchayat_name">
-                <option value="">All</option>
-            </select>
-            {% endif %}
+
+            <div class="form-container">
+                <label for="block_name">Block:</label>
+                <select name="block_name" id="block_name">
+                    <option value="">All</option>
+                    {% for block in all_blocks %}
+                    <option value="{{ block }}" {% if block==block_name %}selected{% endif %}>{{ block }}</option>
+                    {% endfor %}
+                </select>
+
+                {% if block_name %}
+                <label for="panchayat_name">Panchayat:</label>
+                <select name="panchayat_name" id="panchayat_name">
+                    <option value="">All</option>
+                </select>
+                {% endif %}
+            </div>
 
             <script>
                 document.getElementById("block_name").addEventListener("change", async function () {
@@ -132,12 +206,18 @@
                 });
             </script>
 
-            <div style="display: flex; gap: 12px; justify-content: left; align-items: center; margin-top: 10px;">
-                <button type="submit" class="search_button">Filter</button>
-                <button type="button" id="downloadCsvBtn" class="search_button" onclick="downloadCsv()"
-                    title="Download visible report as CSV">Download CSV</button>
-                <button type="button" id="getPlotsBtn" class="search_button" onclick="goToPlots()"
-                    title="Show plots for current results">Get Plots</button>
+            <div class="button-group">
+                <button type="submit" class="search_button btn-filter">Filter</button>
+
+                <button type="button" id="downloadCsvBtn" class="search_button btn-csv" onclick="downloadCsv()"
+                    title="Download visible report as CSV">
+                    Download CSV
+                </button>
+
+                <button type="button" id="getPlotsBtn" class="search_button btn-plots" onclick="goToPlots()"
+                    title="Show plots for whole block">
+                    Get Plots
+                </button>
             </div>
             <script>
                 function goToPlots() {
