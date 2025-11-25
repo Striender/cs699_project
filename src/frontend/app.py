@@ -10,8 +10,8 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-# Comma-separated list of district table names in supabase; update if your table names differ
-DISTRICT_TABLES = ["ratnagiridb","punedb","thanedb","nagpurdb","kolhapurdb"]
+# Comma-separated list of district table names in supabase
+DISTRICT_TABLES = ["ratnagiridb","punedb","thanedb","nagpurdb","kolhapurdb", "bhandaradb", "gadchirolidb", "raigaddb", "sanglidb", "sindhudurgdb", "wardhadb", "sataradb", "palghardb"]
 
 
 if not SUPABASE_URL or not SUPABASE_KEY:
@@ -21,33 +21,38 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 
+def get_table_from_state(state_name: str):
+    return state_name.lower().replace(" ", "") + "db"
+
+
+def get_state_from_table(table_name: str):
+    name = table_name.replace("db", "")
+    return name.upper()
+
 
 def _distinct_values_across_tables(column_name: str):
     
     seen = set()
     quoted = f'"{column_name}"'
-    for table in DISTRICT_TABLES:
-        try:
-            # fetch ONLY the target column
-            resp = (
-                supabase.table(table)
-                .select(quoted)
-                .neq(column_name, None)     # ignore NULLs
-                .execute()
-            )
+    table = DISTRICT_TABLES[0]
+   
+        # fetch ONLY the target column
+    resp = (
+        supabase.table(table)
+        .select(quoted)
+        .neq(column_name, None)     # ignore NULLs
+        .execute()
+    )
 
-            rows = resp.data
-            if not rows:
-                continue
+    rows = resp.data
+    
 
-            for row in rows:
-                val = row.get(column_name)
-                if val is not None:
-                    seen.add(str(val).strip())
+    for row in rows:
+        val = row.get(column_name)
+        if val is not None:
+            seen.add(str(val).strip())
 
-        except Exception as e:
-            print(f"Skipped {table}: {e}")
-            continue
+   
 
     values = list(seen)
 
@@ -65,7 +70,7 @@ def home():
     # column names exactly as in your Supabase tables
     years = _distinct_values_across_tables("Work Start Fin Year")
     # use District Name as the selectable location list (there is no 'state' column in the provided schema)
-    districts = _distinct_values_across_tables("District Name")
+    districts = [get_state_from_table(t) for t in DISTRICT_TABLES]
 
     print(f"DEBUG: Found {len(years)} years and {len(districts)} districts.")
     return render_template("index.html", years=years, all_states=districts)
@@ -84,28 +89,26 @@ def show_report():
     blocks_set = set()
     
     if selected_year and selected_state:
-        for table in DISTRICT_TABLES:
-            try:
-                # filter by the exact columns; column names include spaces as provided
-                query = supabase.table(table).select("*")
-                query = query.eq('"Work Start Fin Year"', selected_year)
-                query = query.eq('"District Name"', selected_state)
+        
+        table = get_table_from_state(selected_state)
+        query = supabase.table(table).select("*")
+        query = query.eq('"Work Start Fin Year"', selected_year)
+        query = query.eq('"District Name"', selected_state)
 
-                resp = query.range(0, 20000).execute()
-                if resp.data:
-                    for row in resp.data:
-                        blocks_set.add(row.get("Block Name"))
-                        
+        resp = query.range(0, 20000).execute()
+        if resp.data:
+            for row in resp.data:
+                blocks_set.add(row.get("Block Name"))
+                
 
-                        # Apply optional filters
-                        if selected_block and row.get("Block Name") != selected_block:
-                            continue
-                        if selected_panchayat and row.get("Panchayat Name") != selected_panchayat:
-                            continue
+                # Apply optional filters
+                if selected_block and row.get("Block Name") != selected_block:
+                    continue
+                if selected_panchayat and row.get("Panchayat Name") != selected_panchayat:
+                    continue
 
-                        results.append(row)
-            except Exception:
-                continue
+                results.append(row)
+    
 
         # sort results by Block Name (fallback to Work Name)
         results = sorted(
@@ -145,25 +148,25 @@ def get_panchayats():
     if not (year and state and block):
         return jsonify([])
 
-    for table in DISTRICT_TABLES:
-        try:
-            resp = (
-                supabase.table(table)
-                .select('"Panchayat Name"')
-                .eq('"Work Start Fin Year"', year)
-                .eq('"District Name"', state)
-                .eq('"Block Name"', block)
-                .range(0, 10000)
-                .execute()
-            )
-            if resp.data:
-                for row in resp.data:
-                    p_name = row.get("Panchayat Name")
-                    if p_name:  # only non-empty panchayats
-                        panchayats_set.add(p_name)
-        except Exception as e:
-            print(f"Error fetching panchayats from {table}: {e}")
-            continue
+    table = get_table_from_state(state)
+    try:
+        resp = (
+            supabase.table(table)
+            .select('"Panchayat Name"')
+            .eq('"Work Start Fin Year"', year)
+            .eq('"District Name"', state)
+            .eq('"Block Name"', block)
+            .range(0, 10000)
+            .execute()
+        )
+        if resp.data:
+            for row in resp.data:
+                p_name = row.get("Panchayat Name")
+                if p_name:  # only non-empty panchayats
+                    panchayats_set.add(p_name)
+    except Exception as e:
+        print(f"Error fetching panchayats from {table}: {e}")
+           
 
     return jsonify(sorted(panchayats_set))
 
@@ -178,21 +181,20 @@ def get_plots():
 
     results = []
     if year and state:
-        for table in DISTRICT_TABLES:
-            try:
-                query = supabase.table(table).select("*")
-                query = query.eq('"Work Start Fin Year"', year)
-                query = query.eq('"District Name"', state)
-                if block:
-                    query = query.eq('"Block Name"', block)
-                if panchayat:
-                    query = query.eq('"Panchayat Name"', panchayat)
+        table = get_table_from_state(state)
+            
+        query = supabase.table(table).select("*")
+        query = query.eq('"Work Start Fin Year"', year)
+        query = query.eq('"District Name"', state)
+        if block:
+            query = query.eq('"Block Name"', block)
+        if panchayat:
+            query = query.eq('"Panchayat Name"', panchayat)
 
-                resp = query.range(0, 20000).execute()
-                if resp.data:
-                    results.extend(resp.data)
-            except Exception:
-                continue
+        resp = query.range(0, 20000).execute()
+        if resp.data:
+            results.extend(resp.data)
+    
 
     # Pass results to plots.html for plotting
     return render_template("plots.html", results=results, year=year, state=state, block=block, panchayat=panchayat)

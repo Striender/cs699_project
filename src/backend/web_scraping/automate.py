@@ -19,38 +19,48 @@ URL2 = "https://nreganarep.nic.in/netnrega/dynamic_work_details.aspx?lflag=eng&f
 
 # Setup Chrome
 chrome_options = Options()
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--disable-infobars")
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_argument("--start-maximized")
+chrome_options.add_argument("--remote-debugging-port=9222")
+chrome_options.add_argument("--disable-features=VizDisplayCompositor")
 chrome_options.add_experimental_option("detach", True)
+
 browser = webdriver.Chrome(options=chrome_options)
 browser.maximize_window()
 
-districts = ["PUNE", "THANE", "NAGPUR", "RATNAGIRI", "KOLHAPUR"]
+districts = ["PUNE", "THANE", "NAGPUR", "RATNAGIRI", "KOLHAPUR", "BHANDARA", "GADCHIROLI", "PALGHAR", "RAIGAD", "SANGLI", "SATARA", "SINDHUDURG", "WARDHA"]
 
 def scrape_for_url(url, district):
     """Open URL, select district, scrape table, return df."""
     browser.get(url)
 
     # select state
-    WebDriverWait(browser, 20).until(
+    WebDriverWait(browser, 100).until(
         EC.presence_of_element_located((By.ID, "ddl_state"))
     ).send_keys("MAHARASHTRA")
     time.sleep(1)
 
     # select district
-    WebDriverWait(browser, 20).until(
+    WebDriverWait(browser, 100).until(
         EC.presence_of_element_located((By.ID, "ddl_dist"))
     ).send_keys(district)
     time.sleep(1)
 
     # click submit
-    WebDriverWait(browser, 20).until(
+    WebDriverWait(browser, 100).until(
         EC.element_to_be_clickable((By.ID, "ContentPlaceHolder1_Button1"))
     ).click()
 
     # wait until table loads
-    table_element = WebDriverWait(browser, 20).until(
+    table_element = WebDriverWait(browser, 100).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "div.table-responsive table"))
     )
 
+    time.sleep(2)
     # extract df
     table_html = table_element.get_attribute("outerHTML")
     return scrape.scrapeFunc(table_html)
