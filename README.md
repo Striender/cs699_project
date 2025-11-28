@@ -1,8 +1,8 @@
 # README
 
 ##Credits
-Flask documentation : https://flask.palletsprojects.com/en/stable/
-w3 school : https://www.w3schools.com/
+Flask documentation : https://flask.palletsprojects.com/en/stable/.
+w3 school : https://www.w3schools.com/.
 
 ## MGNREGA Webscraping tool
 
