@@ -1,5 +1,9 @@
 # README
 
+##Credits
+Flask documentation : https://flask.palletsprojects.com/en/stable/
+w3 school : https://www.w3schools.com/
+
 ## MGNREGA Webscraping tool
 
 The project scrapes the tabular data from the MGNREGA MIS website: https://nreganarep.nic.in/
